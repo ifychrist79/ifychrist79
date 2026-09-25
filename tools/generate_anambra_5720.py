@@ -1,3 +1,4 @@
+# Corrected 2026 format: PU name, recorded location, Existing/New status.
 import re, requests
 from bs4 import BeautifulSoup
 from docx import Document
