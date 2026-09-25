@@ -44,7 +44,11 @@ assert len({x[1] for x in rows})==21, "Expected 21 LGAs"
 rows.sort(key=lambda x:tuple(map(int,x[0].split("-"))))
 
 def pretty(s):
-    return re.sub(r"\s+"," ",s.title()).strip()
+    x=re.sub(r"\s+"," ",s.title()).strip()
+    x=re.sub(r"([’\'])S\b",r"\1s",x)
+    for n in ["X","IX","VIII","VII","VI","V","IV","III","II","I"]:
+        x=re.sub(rf"\b{n.title()}\b",n,x)
+    return x
 
 doc=Document()
 sec=doc.sections[0]
@@ -67,7 +71,7 @@ for i,h in enumerate(headers):
         run.bold=True; run.font.size=Pt(7)
 
 for i,(full,lgacode,lga,wcode,ward,puc,pu,status) in enumerate(rows,1):
-    vals=[str(i),f"04-{int(lgacode):02d}",pretty(lga),wcode,pretty(ward),full,pu,pretty(pu),status]
+    vals=[str(i),f"04-{int(lgacode)-69:02d}",pretty(lga),wcode,pretty(ward),full,pu,pretty(pu),status]
     cs=t.add_row().cells
     for j,v in enumerate(vals):
         cs[j].text=v; cs[j].width=Inches(widths[j]); cs[j].vertical_alignment=WD_CELL_VERTICAL_ALIGNMENT.CENTER
