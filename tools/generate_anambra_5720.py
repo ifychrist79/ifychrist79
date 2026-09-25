@@ -1,4 +1,5 @@
 import json, re, requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.section import WD_ORIENT
@@ -13,10 +14,15 @@ tree=r.json()["tree"]
 paths=[x["path"] for x in tree if x["path"].endswith("/units/index.json")]
 assert len(paths)==326, f"Expected 326 ward unit files, got {len(paths)}"
 rows=[]
-for path in paths:
-    rr=requests.get(RAW_BASE+"states/04-anambra/lgas/"+path,timeout=60); rr.raise_for_status()
-    units=rr.json()
-    for u in units:
+def fetch_units(path):
+    rr=requests.get(RAW_BASE+"states/04-anambra/lgas/"+path,timeout=30)
+    rr.raise_for_status()
+    return path, rr.json()
+with ThreadPoolExecutor(max_workers=24) as ex:
+    futures=[ex.submit(fetch_units,p) for p in paths]
+    for fut in as_completed(futures):
+        path, units=fut.result()
+        for u in units:
         d=u.get("delimitation","").replace("/","-")
         if not re.fullmatch(r"04-\d{2}-\d{2}-\d{3}",d):
             continue
