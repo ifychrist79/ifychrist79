@@ -7,7 +7,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 REPO_DIR=pathlib.Path("/tmp/inec-polling-units")
-subprocess.run(["git","clone","--depth","1","--branch","main","https://github.com/mykeels/inec-polling-units.git",str(REPO_DIR)],check=True,stdout=subprocess.DEVNULL)
+subprocess.run(["git","clone","--depth","1","https://github.com/mykeels/inec-polling-units.git",str(REPO_DIR)],check=True,stdout=subprocess.DEVNULL)
 paths=list(REPO_DIR.glob("states/04-anambra/lgas/*/wards/*/units/index.json"))
 assert len(paths)==326, f"Expected 326 ward unit files, got {len(paths)}"
 
@@ -24,7 +24,7 @@ for path in paths:
 
 assert len({x[0] for x in rows})==len(rows), "Duplicate PU codes"
 print("LGA_COUNTS", sorted({k:sum(1 for x in rows if x[1]==k) for k in {x[1] for x in rows}}.items(), key=lambda z:int(z[0])))
-assert len(rows)==5719, f"Expected 5719 from repository, got {len(rows)}"
+assert len(rows)==5720, f"Expected 5720 PUs, got {len(rows)}"
 assert len({(x[1],x[3]) for x in rows})==326, "Expected 326 wards"
 assert len({x[1] for x in rows})==21, "Expected 21 LGAs"
 rows.sort(key=lambda x:tuple(map(int,x[0].split("-"))))
