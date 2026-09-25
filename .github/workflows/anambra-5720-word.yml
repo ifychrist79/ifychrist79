@@ -1,0 +1,24 @@
+name: Generate Anambra 5720 Polling Unit Word Directory
+on:
+  push:
+    paths:
+      - "tools/generate_anambra_5720.py"
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install python-docx
+        run: python -m pip install python-docx
+      - name: Generate Word document
+        run: python tools/generate_anambra_5720.py
+      - name: Upload Word document
+        uses: actions/upload-artifact@v4
+        with:
+          name: Anambra-5720-Polling-Units-Word
+          path: Anambra_5720_Polling_Units_INEC_Locator_Directory.docx
+          retention-days: 30
