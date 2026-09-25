@@ -1,6 +1,4 @@
-# Corrected 2026 format: PU name, recorded location, Existing/New status.
-import re, requests
-from bs4 import BeautifulSoup
+import json, re, requests
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.section import WD_ORIENT
@@ -8,45 +6,31 @@ from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
-LGA_MAP=[
-("01","Aguata","aguata"),("02","Ayamelum","ayamelum"),("03","Anambra East","anambra-east"),
-("04","Anambra West","anambra-west"),("05","Anaocha","anaocha"),("06","Awka North","awka-north"),
-("07","Awka South","awka-south"),("08","Dunukofia","dunukofia"),("09","Ekwusigo","ekwusigo"),
-("10","Idemili North","idemili-north"),("11","Idemili South","idemili-south"),("12","Ihiala","ihiala"),
-("13","Njikoka","njikoka"),("14","Nnewi North","nnewi-north"),("15","Nnewi South","nnewi-south"),
-("16","Ogbaru","ogbaru"),("17","Onitsha North","onitsha-north"),("18","Onitsha South","onitsha-south"),
-("19","Orumba North","orumba-north"),("20","Orumba South","orumba-south"),("21","Oyi","oyi")]
-BASE="https://r.jina.ai/https://www.eduweb.com.ng/full-list-of-polling-unit-numbers-and-id-codes-in-{}-lga-anambra-state/"
+TREE_URL="https://api.github.com/repos/mykeels/inec-polling-units/git/trees/f68466879b2ae608b1bfe21b2e0d2a3d7f63c2ed?recursive=1"
+RAW_BASE="https://raw.githubusercontent.com/mykeels/inec-polling-units/cea8b041d1c20819b1a63d0563a83908b8cd4e21/"
+r=requests.get(TREE_URL,timeout=60); r.raise_for_status()
+tree=r.json()["tree"]
+paths=[x["path"] for x in tree if x["path"].startswith("states/04-anambra/lgas/") and x["path"].endswith("/units/index.json")]
+assert len(paths)==326, f"Expected 326 ward unit files, got {len(paths)}"
 rows=[]
-session=requests.Session(); session.headers["User-Agent"]="Mozilla/5.0"
-for code,lga,slug in LGA_MAP:
-    url=BASE.format(slug)
-    html=session.get(url,timeout=60); html.raise_for_status()
-    soup=BeautifulSoup(html.text,"html.parser")
-    current_ward=None
-    for node in soup.find_all(["h4","table"]):
-        if node.name=="h4":
-            txt=node.get_text(" ",strip=True)
-            m=re.match(r"^\s*\d+\s+(.+?)\s+WARD\b",txt,re.I)
-            if m: current_ward=m.group(1).strip()
+for path in paths:
+    rr=requests.get(RAW_BASE+path,timeout=60); rr.raise_for_status()
+    units=rr.json()
+    for u in units:
+        d=u.get("delimitation","").replace("/","-")
+        if not re.fullmatch(r"04-\d{2}-\d{2}-\d{3}",d):
             continue
-        for tr in node.find_all("tr"):
-            cells=[x.get_text(" ",strip=True) for x in tr.find_all(["td","th"])]
-            if len(cells)<3 or not re.match(r"^04-\d{2}-\d{2}-\d{3}$",cells[0]): continue
-            full,pu,remark=cells[:3]
-            parts=full.split("-")
-            if parts[1]!=code: raise ValueError(f"LGA code mismatch: {full} on {url}")
-            ward_code=parts[2]
-            status="New" if "NEW" in remark.upper() else "Existing" if "EXISTING" in remark.upper() else remark.strip()
-            if status not in ("New","Existing"): raise ValueError(f"Unknown status {remark} for {full}")
-            if not current_ward: raise ValueError(f"No ward heading before {full}")
-            rows.append((full,code,lga,ward_code,current_ward,parts[3],pu,status))
-# validate and sort
-assert len({r[0] for r in rows})==len(rows), "Duplicate PU codes"
+        remark=u.get("remark","").strip().upper()
+        status="New" if remark=="NEW PU" else "Existing" if remark=="EXISTING PU" else remark
+        rows.append((d,u.get("local_government_id",""),u.get("local_government_name","").strip(),d.split("-")[2],u.get("ward_name","").strip(),d.split("-")[3],u.get("name","").strip(),status))
+assert len({x[0] for x in rows})==len(rows), "Duplicate PU codes"
 assert len(rows)==5720, f"Expected 5720 PUs, got {len(rows)}"
-assert len({(r[1],r[3]) for r in rows})==326, f"Expected 326 wards"
-assert len({r[1] for r in rows})==21
-rows.sort(key=lambda r:tuple(map(int,r[0].split("-"))))
+assert len({(x[1],x[3]) for x in rows})==326, "Expected 326 wards"
+assert len({x[1] for x in rows})==21, "Expected 21 LGAs"
+rows.sort(key=lambda x:tuple(map(int,x[0].split("-"))))
+
+def pretty(s): return re.sub(r"\s+"," ",s.title()).strip()
+
 doc=Document(); sec=doc.sections[0]; sec.orientation=WD_ORIENT.LANDSCAPE
 sec.page_width,sec.page_height=sec.page_height,sec.page_width
 sec.top_margin=Inches(.45); sec.bottom_margin=Inches(.45); sec.left_margin=Inches(.35); sec.right_margin=Inches(.35)
