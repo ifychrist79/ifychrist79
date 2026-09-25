@@ -10,11 +10,11 @@ TREE_URL="https://api.github.com/repos/mykeels/inec-polling-units/git/trees/f684
 RAW_BASE="https://raw.githubusercontent.com/mykeels/inec-polling-units/cea8b041d1c20819b1a63d0563a83908b8cd4e21/"
 r=requests.get(TREE_URL,timeout=60); r.raise_for_status()
 tree=r.json()["tree"]
-paths=[x["path"] for x in tree if x["path"].startswith("states/04-anambra/lgas/") and x["path"].endswith("/units/index.json")]
+paths=[x["path"] for x in tree if x["path"].endswith("/units/index.json")]
 assert len(paths)==326, f"Expected 326 ward unit files, got {len(paths)}"
 rows=[]
 for path in paths:
-    rr=requests.get(RAW_BASE+path,timeout=60); rr.raise_for_status()
+    rr=requests.get(RAW_BASE+"states/04-anambra/lgas/"+path,timeout=60); rr.raise_for_status()
     units=rr.json()
     for u in units:
         d=u.get("delimitation","").replace("/","-")
