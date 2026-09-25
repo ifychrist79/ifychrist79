@@ -33,7 +33,8 @@ with ThreadPoolExecutor(max_workers=24) as ex:
             rows.append((d,u.get("local_government_id",""),u.get("local_government_name","").strip(),d.split("-")[2],u.get("ward_name","").strip(),d.split("-")[3],u.get("name","").strip(),status))
 
 assert len({x[0] for x in rows})==len(rows), "Duplicate PU codes"
-print("LGA_COUNTS", sorted({k:sum(1 for x in rows if x[1]==k) for k in {x[1] for x in rows}}.items(), key=lambda z:int(z[0])))\nassert len(rows)==5719, f"Expected 5719 from repository, got {len(rows)}"
+print("LGA_COUNTS", sorted({k:sum(1 for x in rows if x[1]==k) for k in {x[1] for x in rows}}.items(), key=lambda z:int(z[0])))
+assert len(rows)==5719, f"Expected 5719 from repository, got {len(rows)}"
 assert len({(x[1],x[3]) for x in rows})==326, "Expected 326 wards"
 assert len({x[1] for x in rows})==21, "Expected 21 LGAs"
 rows.sort(key=lambda x:tuple(map(int,x[0].split("-"))))
