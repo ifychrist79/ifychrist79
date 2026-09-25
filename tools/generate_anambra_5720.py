@@ -1,5 +1,4 @@
-import json, re, requests
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import json, re, requests, subprocess, pathlib
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.section import WD_ORIENT
@@ -7,24 +6,15 @@ from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
-TREE_URL="https://api.github.com/repos/mykeels/inec-polling-units/git/trees/f68466879b2ae608b1bfe21b2e0d2a3d7f63c2ed?recursive=1"
-RAW_BASE="https://raw.githubusercontent.com/mykeels/inec-polling-units/cea8b041d1c20819b1a63d0563a83908b8cd4e21/"
-r=requests.get(TREE_URL,timeout=60); r.raise_for_status()
-tree=r.json()["tree"]
-paths=[x["path"] for x in tree if x["path"].endswith("/units/index.json")]
+REPO_DIR=pathlib.Path("/tmp/inec-polling-units")
+subprocess.run(["git","clone","--depth","1","--branch","main","https://github.com/mykeels/inec-polling-units.git",str(REPO_DIR)],check=True,stdout=subprocess.DEVNULL)
+paths=list(REPO_DIR.glob("states/04-anambra/lgas/*/wards/*/units/index.json"))
 assert len(paths)==326, f"Expected 326 ward unit files, got {len(paths)}"
 
-def fetch_units(path):
-    rr=requests.get(RAW_BASE+"states/04-anambra/lgas/"+path,timeout=30)
-    rr.raise_for_status()
-    return rr.json()
-
 rows=[]
-with ThreadPoolExecutor(max_workers=24) as ex:
-    futures={ex.submit(fetch_units,p):p for p in paths}
-    for fut in as_completed(futures):
-        units=fut.result()
-        for u in units:
+for path in paths:
+    units=json.loads(path.read_text(encoding="utf-8"))
+    for u in units:
             d=u.get("delimitation","").replace("/","-")
             if not re.fullmatch(r"04-\d{2}-\d{2}-\d{3}",d):
                 continue
