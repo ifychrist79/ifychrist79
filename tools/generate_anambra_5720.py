@@ -37,6 +37,12 @@ if not any(x[0]=="04-10-07-130" for x in rows):
     rows.append(("04-10-07-130","79","IDEMILI NORTH","07","OBOSI","130","OPEN SPACE AT NO. 48 ENUGU OZALLA ROAD BY OBOSI ROAD ODUME","New"))
 
 assert len({x[0] for x in rows})==len(rows), "Duplicate PU codes"
+gaps=[]
+for key in sorted({(x[1],x[3]) for x in rows}):
+    nums={int(x[6]) for x in rows if (x[1],x[3])==key}
+    if nums:
+        gaps.extend([(key[0],key[1],n) for n in range(1,max(nums)+1) if n not in nums])
+print("GAPS",gaps[:50],"PU130_PRESENT",any(x[0]=="04-10-07-130" for x in rows))
 assert len(rows)==5720, f"Expected 5720 PUs, got {len(rows)}"
 assert len({(x[1],x[3]) for x in rows})==326, "Expected 326 wards"
 assert len({x[1] for x in rows})==21, "Expected 21 LGAs"
