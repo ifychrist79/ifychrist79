@@ -40,7 +40,7 @@ assert len({x[0] for x in rows})==len(rows), "Duplicate PU codes"
 assert len(rows)==5720, f"Expected 5720 PUs, got {len(rows)}"
 assert len({(x[1],x[3]) for x in rows})==326, "Expected 326 wards"
 assert len({x[1] for x in rows})==21, "Expected 21 LGAs"
-rows.sort(key=lambda x:tuple(map(int,x[0].split("-")))
+rows.sort(key=lambda x:tuple(map(int,x[0].split("-"))))
 
 def pretty(s):
     return re.sub(r"\s+"," ",s.title()).strip()
