@@ -39,7 +39,7 @@ if not any(x[0]=="04-10-07-130" for x in rows):
 assert len({x[0] for x in rows})==len(rows), "Duplicate PU codes"
 gaps=[]
 for key in sorted({(x[1],x[3]) for x in rows}):
-    nums={int(x[6]) for x in rows if (x[1],x[3])==key}
+    nums={int(x[5]) for x in rows if (x[1],x[3])==key}
     if nums:
         gaps.extend([(key[0],key[1],n) for n in range(1,max(nums)+1) if n not in nums])
 print("GAPS",gaps[:50],"PU130_PRESENT",any(x[0]=="04-10-07-130" for x in rows))
