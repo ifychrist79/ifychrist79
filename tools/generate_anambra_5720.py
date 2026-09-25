@@ -31,18 +31,13 @@ with ThreadPoolExecutor(max_workers=24) as ex:
             status="New" if remark=="NEW PU" else "Existing" if remark=="EXISTING PU" else remark
             rows.append((d,u.get("local_government_id",""),u.get("local_government_name","").strip(),d.split("-")[2],u.get("ward_name","").strip(),d.split("-")[3],u.get("name","").strip(),status))
 
-# One current Anambra PU is absent from the repository snapshot: 04-10-07-130.
-# It is independently present in the INEC election-results-derived Anambra register.
-if not any(x[0]=="04-10-07-130" for x in rows):
-    rows.append(("04-10-07-130","79","IDEMILI NORTH","07","OBOSI","130","OPEN SPACE AT NO. 48 ENUGU OZALLA ROAD BY OBOSI ROAD ODUME","New"))
+# One current Anambra PU is absent from the repository snapshot: 04-10-07-079.
+# It is independently present in the INEC election-results-derived Anambra register and the current
+# Idemili North directory as a NEW PU.
+if not any(x[0]=="04-10-07-079" for x in rows):
+    rows.append(("04-10-07-079","79","IDEMILI NORTH","07","OBOSI","079","St. Peter's N/P School Uruowulu","New"))
 
 assert len({x[0] for x in rows})==len(rows), "Duplicate PU codes"
-gaps=[]
-for key in sorted({(x[1],x[3]) for x in rows}):
-    nums={int(x[5]) for x in rows if (x[1],x[3])==key}
-    if nums:
-        gaps.extend([(key[0],key[1],n) for n in range(1,max(nums)+1) if n not in nums])
-print("GAPS",gaps[:50],"PU130_PRESENT",any(x[0]=="04-10-07-130" for x in rows))
 assert len(rows)==5720, f"Expected 5720 PUs, got {len(rows)}"
 assert len({(x[1],x[3]) for x in rows})==326, "Expected 326 wards"
 assert len({x[1] for x in rows})==21, "Expected 21 LGAs"
