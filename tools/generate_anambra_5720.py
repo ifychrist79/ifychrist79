@@ -16,7 +16,7 @@ LGA_MAP=[
 ("13","Njikoka","njikoka"),("14","Nnewi North","nnewi-north"),("15","Nnewi South","nnewi-south"),
 ("16","Ogbaru","ogbaru"),("17","Onitsha North","onitsha-north"),("18","Onitsha South","onitsha-south"),
 ("19","Orumba North","orumba-north"),("20","Orumba South","orumba-south"),("21","Oyi","oyi")]
-BASE="https://r.jina.ai/http://www.eduweb.com.ng/full-list-of-polling-unit-numbers-and-id-codes-in-{}-lga-anambra-state/"
+BASE="https://r.jina.ai/https://www.eduweb.com.ng/full-list-of-polling-unit-numbers-and-id-codes-in-{}-lga-anambra-state/"
 rows=[]
 session=requests.Session(); session.headers["User-Agent"]="Mozilla/5.0"
 for code,lga,slug in LGA_MAP:
